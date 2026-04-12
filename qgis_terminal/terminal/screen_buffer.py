@@ -465,9 +465,12 @@ class ScreenBuffer:
             if not self._using_alt:
                 self._alt_grid = self._grid
                 self._alt_cursor = (self.cursor_row, self.cursor_col)
+                self._alt_scroll_region = (self._scroll_top, self._scroll_bottom)
                 self._grid = [self._empty_line() for _ in range(self.rows)]
                 self.cursor_row = 0
                 self.cursor_col = 0
+                self._scroll_top = 0
+                self._scroll_bottom = self.rows - 1
                 self._using_alt = True
                 self._dirty_lines = set(range(self.rows))
 
@@ -482,6 +485,11 @@ class ScreenBuffer:
             if self._using_alt and self._alt_grid is not None:
                 self._grid = self._alt_grid
                 self.cursor_row, self.cursor_col = self._alt_cursor
+                if hasattr(self, "_alt_scroll_region"):
+                    self._scroll_top, self._scroll_bottom = self._alt_scroll_region
+                else:
+                    self._scroll_top = 0
+                    self._scroll_bottom = self.rows - 1
                 self._alt_grid = None
                 self._alt_cursor = None
                 self._using_alt = False
