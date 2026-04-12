@@ -1,5 +1,5 @@
 #!/bin/bash
-# Installation script for QGIS Plugin Template
+# Installation script for QGIS Terminal
 #
 # Usage:
 #   ./install.sh              # Install the plugin
@@ -9,7 +9,7 @@
 set -e
 
 # Default values
-PLUGIN_NAME="plugin_template"
+PLUGIN_NAME="qgis_terminal"
 REMOVE=false
 
 # Parse arguments
@@ -28,7 +28,7 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Options:"
             echo "  --remove, -r      Remove the plugin instead of installing"
-            echo "  --name, -n NAME   Plugin folder name (default: plugin_template)"
+            echo "  --name, -n NAME   Plugin folder name (default: qgis_terminal)"
             echo "  --help, -h        Show this help message"
             exit 0
             ;;
@@ -48,13 +48,13 @@ elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
     PLUGIN_DIR="$APPDATA/QGIS/QGIS3/profiles/default/python/plugins"
 else
     echo "Unknown OS type: $OSTYPE"
-    echo "Please manually copy the plugin_template folder to your QGIS plugins directory."
+    echo "Please manually copy the qgis_terminal folder to your QGIS plugins directory."
     exit 1
 fi
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_DIR="${SCRIPT_DIR}/plugin_template"
+SOURCE_DIR="${SCRIPT_DIR}/qgis_terminal"
 
 echo "Platform: $OSTYPE"
 echo "Plugin directory: $PLUGIN_DIR"

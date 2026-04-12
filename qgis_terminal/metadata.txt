@@ -1,0 +1,41 @@
+[general]
+name=QGIS Terminal
+qgisMinimumVersion=3.28
+description=An integrated terminal for QGIS, similar to VS Code's integrated terminal.
+version=0.1.0
+author=Qiusheng Wu
+email=giswqs@gmail.com
+
+about=QGIS Terminal provides a dockable, integrated terminal panel within QGIS,
+    similar to the integrated terminal in VS Code.
+
+    Features:
+    - Dockable terminal panel that can be positioned anywhere in the QGIS interface
+    - True interactive shell with history, tab completion, and colored output
+    - Cross-platform support (Linux, macOS, Windows)
+    - ANSI color and escape sequence support
+    - Configurable font, color scheme, and shell
+    - Multiple shell support (bash, zsh, sh, PowerShell, cmd)
+    - Terminal resize handling
+
+tracker=https://github.com/opengeos/qgis-terminal-plugin/issues
+repository=https://github.com/opengeos/qgis-terminal-plugin
+
+hasProcessingProvider=no
+
+tags=terminal, console, shell, command line, dockable
+
+homepage=https://github.com/opengeos/qgis-terminal-plugin
+category=Plugins
+icon=icons/terminal.svg
+
+experimental=False
+deprecated=False
+
+changelog=
+    0.1.0 - Initial release
+        - Integrated terminal with pty-based shell on Unix
+        - ANSI color support
+        - Cross-platform (Linux, macOS, Windows)
+        - Dockable panel with toolbar
+        - Shell selector and restart functionality

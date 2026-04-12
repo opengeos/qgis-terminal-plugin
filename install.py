@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Cross-platform installation script for QGIS Plugin Template.
+Cross-platform installation script for QGIS Terminal.
 
 Usage:
     python install.py          # Install the plugin
@@ -44,7 +44,7 @@ def get_qgis_plugin_dir() -> Path:
 
 
 def install_plugin(
-    source_dir: Path, plugin_dir: Path, plugin_name: str = "plugin_template"
+    source_dir: Path, plugin_dir: Path, plugin_name: str = "qgis_terminal"
 ) -> bool:
     """Install the plugin to the QGIS plugins directory.
 
@@ -73,7 +73,7 @@ def install_plugin(
     return True
 
 
-def remove_plugin(plugin_dir: Path, plugin_name: str = "plugin_template") -> bool:
+def remove_plugin(plugin_dir: Path, plugin_name: str = "qgis_terminal") -> bool:
     """Remove the plugin from the QGIS plugins directory.
 
     Args:
@@ -96,9 +96,7 @@ def remove_plugin(plugin_dir: Path, plugin_name: str = "plugin_template") -> boo
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Install or remove QGIS Plugin Template"
-    )
+    parser = argparse.ArgumentParser(description="Install or remove QGIS Terminal")
     parser.add_argument(
         "--remove",
         action="store_true",
@@ -113,14 +111,14 @@ def main():
     parser.add_argument(
         "--name",
         type=str,
-        default="plugin_template",
-        help="Plugin folder name in QGIS plugins directory (default: plugin_template)",
+        default="qgis_terminal",
+        help="Plugin folder name in QGIS plugins directory (default: qgis_terminal)",
     )
     args = parser.parse_args()
 
     # Get script directory
     script_dir = Path(__file__).parent.resolve()
-    source_dir = script_dir / "plugin_template"
+    source_dir = script_dir / "qgis_terminal"
 
     if not source_dir.exists():
         print(f"Error: Plugin source directory not found: {source_dir}")

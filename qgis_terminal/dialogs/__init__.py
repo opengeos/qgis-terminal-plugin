@@ -1,15 +1,13 @@
 """
-Plugin Template Dialogs
+QGIS Terminal Dialogs
 
-This module contains the dialog and dock widget classes for the plugin template.
+This module contains the dialog and dock widget classes for the plugin.
 """
 
-from .sample_dock import SampleDockWidget
 from .settings_dock import SettingsDockWidget
 from .update_checker import UpdateCheckerDialog
 
 __all__ = [
-    "SampleDockWidget",
     "SettingsDockWidget",
     "UpdateCheckerDialog",
 ]

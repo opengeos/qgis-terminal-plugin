@@ -1,10 +1,10 @@
 """
-Dependency Manager for Plugin Template
+Dependency Manager for QGIS Terminal
 
-Manages a virtual environment for plugin dependencies (e.g. geopandas)
+Manages a virtual environment for plugin dependencies
 to avoid polluting the QGIS built-in Python environment.
 
-The venv is created at ~/.qgis_plugin_template/venv_pyX.Y and its
+The venv is created at ~/.qgis_terminal/venv_pyX.Y and its
 site-packages directory is added to sys.path at runtime.
 """
 
@@ -24,7 +24,7 @@ REQUIRED_PACKAGES = [
     ("geopandas", "geopandas"),
 ]
 
-CACHE_DIR = os.path.join(os.path.expanduser("~"), ".qgis_plugin_template")
+CACHE_DIR = os.path.join(os.path.expanduser("~"), ".qgis_terminal")
 PYTHON_VERSION = f"py{sys.version_info.major}.{sys.version_info.minor}"
 
 
@@ -32,7 +32,7 @@ def get_venv_dir() -> str:
     """Get the path to the plugin's virtual environment directory.
 
     Returns:
-        Path to the venv directory (~/.qgis_plugin_template/venv_pyX.Y).
+        Path to the venv directory (~/.qgis_terminal/venv_pyX.Y).
     """
     return os.path.join(CACHE_DIR, f"venv_{PYTHON_VERSION}")
 
