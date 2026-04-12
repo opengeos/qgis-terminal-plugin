@@ -1,0 +1,50 @@
+[general]
+name=Plugin Template
+qgisMinimumVersion=3.28
+description=A template for creating QGIS plugins with dockable panels, update checker, and about dialog.
+version=0.2.0
+author=Your Name
+email=your.email@example.com
+
+about=This is a template plugin that demonstrates the structure and best practices for QGIS plugin development.
+
+    Features:
+    - Dockable panels that can be positioned anywhere in the QGIS interface
+    - Plugin update checker that fetches the latest version from GitHub
+    - About dialog with version information
+    - Menu and toolbar integration
+    - One-click dependency installer using uv for fast cross-platform package management
+    - Isolated virtual environment for Python dependencies
+    - Clean, modular code structure following QGIS plugin guidelines
+
+    Requirements:
+    - Python packages: geopandas (installed automatically via Settings > Dependencies)
+
+    Use this template as a starting point for your own QGIS plugins.
+
+tracker=https://github.com/opengeos/qgis-plugin-template/issues
+repository=https://github.com/opengeos/qgis-plugin-template
+
+hasProcessingProvider=no
+
+tags=template, plugin, development, dockable, panels, dependencies, uv
+
+homepage=https://github.com/opengeos/qgis-plugin-template
+category=Plugins
+icon=icons/icon.svg
+
+experimental=False
+deprecated=False
+
+changelog=
+    0.2.0 - Add one-click dependency installer
+        - uv-based dependency installer for fast cross-platform package management
+        - Isolated virtual environment at ~/.qgis_plugin_template/
+        - Dependencies tab in Settings panel
+        - geopandas as sample dependency
+    0.1.0 - Initial release
+        - Basic plugin structure with dockable panels
+        - Update checker functionality
+        - About dialog
+        - Menu and toolbar integration
+
