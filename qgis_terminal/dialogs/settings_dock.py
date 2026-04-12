@@ -1,5 +1,5 @@
 """
-Settings Dock Widget for Plugin Template
+Settings Dock Widget for QGIS Terminal
 
 This module provides a settings panel that demonstrates
 how to create configuration panels for QGIS plugins.
@@ -32,7 +32,7 @@ class SettingsDockWidget(QDockWidget):
     """A settings panel for configuring plugin options."""
 
     # Settings keys
-    SETTINGS_PREFIX = "PluginTemplate/"
+    SETTINGS_PREFIX = "QGISTerminal/"
 
     def __init__(self, iface, parent=None):
         """Initialize the settings dock widget.
@@ -195,7 +195,7 @@ class SettingsDockWidget(QDockWidget):
         # Note about isolation
         note_label = QLabel(
             "Packages are installed in an isolated environment\n"
-            "(~/.qgis_plugin_template/) and do not affect your QGIS Python.\n"
+            "(~/.qgis_terminal/) and do not affect your QGIS Python.\n"
             "If packages are not detected after installation, restart QGIS."
         )
         note_label.setWordWrap(True)
@@ -293,7 +293,7 @@ class SettingsDockWidget(QDockWidget):
                 "color: green; font-weight: bold; padding: 5px;"
             )
             self.iface.messageBar().pushSuccess(
-                "Plugin Template", "Dependencies installed successfully!"
+                "QGIS Terminal", "Dependencies installed successfully!"
             )
             self._refresh_dependency_status()
 
@@ -618,7 +618,7 @@ class SettingsDockWidget(QDockWidget):
         self.status_label.setStyleSheet("color: green; font-size: 10px;")
 
         self.iface.messageBar().pushSuccess(
-            "Plugin Template", "Settings saved successfully!"
+            "QGIS Terminal", "Settings saved successfully!"
         )
 
     def _reset_defaults(self):

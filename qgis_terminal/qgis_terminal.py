@@ -1,8 +1,8 @@
 """
-QGIS Plugin Template - Main Plugin Class
+QGIS Terminal - Main Plugin Class
 
 This module contains the main plugin class that manages the QGIS interface
-integration, menu items, toolbar buttons, and dockable panels.
+integration, menu items, toolbar buttons, and the terminal dock panel.
 """
 
 import os
@@ -12,8 +12,8 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QMenu, QToolBar, QMessageBox
 
 
-class PluginTemplate:
-    """Plugin Template implementation class for QGIS."""
+class QgisTerminal:
+    """QGIS Terminal plugin implementation class."""
 
     def __init__(self, iface):
         """Constructor.
@@ -28,7 +28,7 @@ class PluginTemplate:
         self.toolbar = None
 
         # Dock widgets (lazy loaded)
-        self._sample_dock = None
+        self._terminal_dock = None
         self._settings_dock = None
 
     def add_action(
@@ -81,21 +81,21 @@ class PluginTemplate:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         # Create menu
-        self.menu = QMenu("&Plugin Template")
+        self.menu = QMenu("&QGIS Terminal")
         self.iface.mainWindow().menuBar().addMenu(self.menu)
 
         # Create toolbar
-        self.toolbar = QToolBar("Plugin Template Toolbar")
-        self.toolbar.setObjectName("PluginTemplateToolbar")
+        self.toolbar = QToolBar("QGIS Terminal Toolbar")
+        self.toolbar.setObjectName("QgisTerminalToolbar")
         self.iface.addToolBar(self.toolbar)
 
         # Get icon paths
         icon_base = os.path.join(self.plugin_dir, "icons")
 
-        # Main panel icon - use custom icon or fallback to QGIS default
-        main_icon = os.path.join(icon_base, "icon.png")
-        if not os.path.exists(main_icon):
-            main_icon = ":/images/themes/default/mActionAddRasterLayer.svg"
+        # Terminal icon
+        terminal_icon = os.path.join(icon_base, "terminal.svg")
+        if not os.path.exists(terminal_icon):
+            terminal_icon = ":/images/themes/default/mActionTerminal.svg"
 
         settings_icon = os.path.join(icon_base, "settings.svg")
         if not os.path.exists(settings_icon):
@@ -105,12 +105,12 @@ class PluginTemplate:
         if not os.path.exists(about_icon):
             about_icon = ":/images/themes/default/mActionHelpContents.svg"
 
-        # Add Sample Panel action (checkable for dock toggle)
-        self.sample_action = self.add_action(
-            main_icon,
-            "Sample Panel",
-            self.toggle_sample_dock,
-            status_tip="Toggle Sample Panel",
+        # Add Terminal Panel action (checkable for dock toggle)
+        self.terminal_action = self.add_action(
+            terminal_icon,
+            "Terminal",
+            self.toggle_terminal_dock,
+            status_tip="Toggle Terminal Panel",
             checkable=True,
             parent=self.iface.mainWindow(),
         )
@@ -118,7 +118,7 @@ class PluginTemplate:
         # Add Settings Panel action (checkable for dock toggle)
         self.settings_action = self.add_action(
             settings_icon,
-            "Settings Panel",
+            "Settings",
             self.toggle_settings_dock,
             status_tip="Toggle Settings Panel",
             checkable=True,
@@ -128,7 +128,7 @@ class PluginTemplate:
         # Add separator to menu
         self.menu.addSeparator()
 
-        # Update icon - use QGIS default download/update icon
+        # Update icon
         update_icon = ":/images/themes/default/mActionRefresh.svg"
 
         # Add Check for Updates action (menu only)
@@ -144,20 +144,21 @@ class PluginTemplate:
         # Add About action (menu only)
         self.add_action(
             about_icon,
-            "About Plugin Template",
+            "About QGIS Terminal",
             self.show_about,
             add_to_toolbar=False,
-            status_tip="About Plugin Template",
+            status_tip="About QGIS Terminal",
             parent=self.iface.mainWindow(),
         )
 
     def unload(self):
         """Remove the plugin menu item and icon from QGIS GUI."""
         # Remove dock widgets
-        if self._sample_dock:
-            self.iface.removeDockWidget(self._sample_dock)
-            self._sample_dock.deleteLater()
-            self._sample_dock = None
+        if self._terminal_dock:
+            self._terminal_dock.shutdown()
+            self.iface.removeDockWidget(self._terminal_dock)
+            self._terminal_dock.deleteLater()
+            self._terminal_dock = None
 
         if self._settings_dock:
             self.iface.removeDockWidget(self._settings_dock)
@@ -166,7 +167,7 @@ class PluginTemplate:
 
         # Remove actions from menu
         for action in self.actions:
-            self.iface.removePluginMenu("&Plugin Template", action)
+            self.iface.removePluginMenu("&QGIS Terminal", action)
 
         # Remove toolbar
         if self.toolbar:
@@ -176,43 +177,43 @@ class PluginTemplate:
         if self.menu:
             self.menu.deleteLater()
 
-    def toggle_sample_dock(self):
-        """Toggle the Sample dock widget visibility."""
-        if self._sample_dock is None:
+    def toggle_terminal_dock(self):
+        """Toggle the Terminal dock widget visibility."""
+        if self._terminal_dock is None:
             try:
-                from .dialogs.sample_dock import SampleDockWidget
+                from .terminal.terminal_dock import TerminalDockWidget
 
-                self._sample_dock = SampleDockWidget(
+                self._terminal_dock = TerminalDockWidget(
                     self.iface, self.iface.mainWindow()
                 )
-                self._sample_dock.setObjectName("PluginTemplateSampleDock")
-                self._sample_dock.visibilityChanged.connect(
-                    self._on_sample_visibility_changed
+                self._terminal_dock.setObjectName("QgisTerminalDock")
+                self._terminal_dock.visibilityChanged.connect(
+                    self._on_terminal_visibility_changed
                 )
-                self.iface.addDockWidget(Qt.RightDockWidgetArea, self._sample_dock)
-                self._sample_dock.show()
-                self._sample_dock.raise_()
+                self.iface.addDockWidget(Qt.BottomDockWidgetArea, self._terminal_dock)
+                self._terminal_dock.show()
+                self._terminal_dock.raise_()
                 return
 
             except Exception as e:
                 QMessageBox.critical(
                     self.iface.mainWindow(),
                     "Error",
-                    f"Failed to create Sample panel:\n{str(e)}",
+                    f"Failed to create Terminal panel:\n{str(e)}",
                 )
-                self.sample_action.setChecked(False)
+                self.terminal_action.setChecked(False)
                 return
 
         # Toggle visibility
-        if self._sample_dock.isVisible():
-            self._sample_dock.hide()
+        if self._terminal_dock.isVisible():
+            self._terminal_dock.hide()
         else:
-            self._sample_dock.show()
-            self._sample_dock.raise_()
+            self._terminal_dock.show()
+            self._terminal_dock.raise_()
 
-    def _on_sample_visibility_changed(self, visible):
-        """Handle Sample dock visibility change."""
-        self.sample_action.setChecked(visible)
+    def _on_terminal_visibility_changed(self, visible):
+        """Handle Terminal dock visibility change."""
+        self.terminal_action.setChecked(visible)
 
     def toggle_settings_dock(self):
         """Toggle the Settings dock widget visibility."""
@@ -223,7 +224,7 @@ class PluginTemplate:
                 self._settings_dock = SettingsDockWidget(
                     self.iface, self.iface.mainWindow()
                 )
-                self._settings_dock.setObjectName("PluginTemplateSettingsDock")
+                self._settings_dock.setObjectName("QgisTerminalSettingsDock")
                 self._settings_dock.visibilityChanged.connect(
                     self._on_settings_visibility_changed
                 )
@@ -268,33 +269,34 @@ class PluginTemplate:
         except Exception as e:
             QMessageBox.warning(
                 self.iface.mainWindow(),
-                "Plugin Template",
+                "QGIS Terminal",
                 f"Could not read version from metadata.txt:\n{str(e)}",
             )
 
         about_text = f"""
-<h2>Plugin Template for QGIS</h2>
+<h2>QGIS Terminal</h2>
 <p>Version: {version}</p>
-<p>Author: Your Name</p>
+<p>Author: Qiusheng Wu</p>
 
 <h3>Features:</h3>
 <ul>
-<li><b>Dockable Panels:</b> Sample panels that can be docked anywhere in the QGIS interface</li>
-<li><b>Update Checker:</b> Check for plugin updates from GitHub</li>
-<li><b>Settings Panel:</b> Configure plugin options</li>
+<li><b>Integrated Terminal:</b> A dockable terminal panel with full shell access</li>
+<li><b>Cross-Platform:</b> Works on Linux, macOS, and Windows</li>
+<li><b>ANSI Colors:</b> Full color support for terminal output</li>
+<li><b>Interactive Shell:</b> History, tab completion, and signal handling</li>
 </ul>
 
 <h3>Links:</h3>
 <ul>
-<li><a href="https://github.com/opengeos/qgis-plugin-template">GitHub Repository</a></li>
-<li><a href="https://github.com/opengeos/qgis-plugin-template/issues">Report Issues</a></li>
+<li><a href="https://github.com/opengeos/qgis-terminal-plugin">GitHub Repository</a></li>
+<li><a href="https://github.com/opengeos/qgis-terminal-plugin/issues">Report Issues</a></li>
 </ul>
 
 <p>Licensed under MIT License</p>
 """
         QMessageBox.about(
             self.iface.mainWindow(),
-            "About Plugin Template",
+            "About QGIS Terminal",
             about_text,
         )
 

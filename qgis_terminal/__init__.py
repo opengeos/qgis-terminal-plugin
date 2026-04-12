@@ -1,8 +1,8 @@
 """
-QGIS Plugin Template
+QGIS Terminal
 
-A template for creating QGIS plugins with dockable panels.
-This plugin provides a starting point for developing custom QGIS plugins.
+An integrated terminal plugin for QGIS, similar to VS Code's terminal.
+Provides a dockable terminal panel with full shell access.
 """
 
 from .deps_manager import ensure_venv_packages_available
@@ -11,16 +11,16 @@ from .deps_manager import ensure_venv_packages_available
 # This is a no-op if the venv has not been created yet.
 ensure_venv_packages_available()
 
-from .plugin_template import PluginTemplate
+from .qgis_terminal import QgisTerminal
 
 
 def classFactory(iface):
-    """Load PluginTemplate class from file plugin_template.
+    """Load QgisTerminal class from file qgis_terminal.
 
     Args:
         iface: A QGIS interface instance.
 
     Returns:
-        PluginTemplate: The plugin instance.
+        QgisTerminal: The plugin instance.
     """
-    return PluginTemplate(iface)
+    return QgisTerminal(iface)
