@@ -20,9 +20,8 @@ from typing import Callable, Dict, List, Optional, Tuple
 from qgis.PyQt.QtCore import QThread, pyqtSignal
 
 # Required packages: (import_name, pip_install_name)
-REQUIRED_PACKAGES = [
-    ("geopandas", "geopandas"),
-]
+# No external dependencies needed -- the terminal uses only Python stdlib + PyQt5.
+REQUIRED_PACKAGES = []
 
 CACHE_DIR = os.path.join(os.path.expanduser("~"), ".qgis_terminal")
 PYTHON_VERSION = f"py{sys.version_info.major}.{sys.version_info.minor}"

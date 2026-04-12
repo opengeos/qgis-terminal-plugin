@@ -265,8 +265,12 @@ class TerminalView(QPlainTextEdit):
 
     def _render_screen(self):
         """Render the screen buffer contents to the text widget."""
-        # Get scrollback + screen lines
-        scrollback = self._screen.get_scrollback_lines()
+        # When in alternate screen mode (vim, less, Claude Code, etc.),
+        # only show the alternate screen -- no scrollback from the main buffer.
+        if self._screen._using_alt:
+            scrollback = []
+        else:
+            scrollback = self._screen.get_scrollback_lines()
         screen = self._screen.get_lines()
 
         # Build the full document
