@@ -91,7 +91,7 @@ class CellAttrs:
         fmt.setForeground(QColor(fg))
         fmt.setBackground(QColor(bg))
         if self.bold:
-            fmt.setFontWeight(QFont.Bold)
+            fmt.setFontWeight(QFont.Weight.Bold)
         if self.italic:
             fmt.setFontItalic(True)
         if self.underline:

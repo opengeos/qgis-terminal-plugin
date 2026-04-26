@@ -96,7 +96,9 @@ class TerminalWidget(QWidget):
 
         # Terminal view
         self._terminal_view = TerminalView(self)
-        self._terminal_view.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self._terminal_view.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
         layout.addWidget(self._terminal_view)
 
         # Connect signals
@@ -117,7 +119,9 @@ class TerminalWidget(QWidget):
                 project_home = QgsProject.instance().homePath()
                 if project_home and os.path.isdir(project_home):
                     return project_home
-            except Exception:
+            except Exception:  # nosec B110
+                # If QgsProject is unavailable or has no project loaded,
+                # silently fall back to the user's home directory below.
                 pass
         return os.path.expanduser("~")
 

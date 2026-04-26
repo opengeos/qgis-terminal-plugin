@@ -24,7 +24,7 @@ class TerminalDockWidget(QDockWidget):
         super().__init__("Terminal", parent)
         self.iface = iface
 
-        self.setAllowedAreas(Qt.AllDockWidgetAreas)
+        self.setAllowedAreas(Qt.DockWidgetArea.AllDockWidgetAreas)
 
         self._terminal_widget = TerminalWidget(iface=iface, parent=self)
         self.setWidget(self._terminal_widget)
