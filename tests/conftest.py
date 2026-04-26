@@ -11,10 +11,16 @@ import sys
 import types
 from unittest.mock import MagicMock
 
-import PyQt6.QtCore
-import PyQt6.QtGui
-import PyQt6.QtNetwork
-import PyQt6.QtWidgets
+import pytest
+
+# Skip the entire suite when PyQt6 isn't installed (e.g. running pytest in a
+# QGIS/PyQt5-only env) so collection doesn't error out before any test runs.
+pytest.importorskip("PyQt6")
+
+import PyQt6.QtCore  # noqa: E402
+import PyQt6.QtGui  # noqa: E402
+import PyQt6.QtNetwork  # noqa: E402
+import PyQt6.QtWidgets  # noqa: E402
 
 
 def _install_qgis_stub() -> None:
