@@ -37,7 +37,7 @@ def _get_default_font():
         family = "Monospace"
 
     font = QFont(family, 11)
-    font.setStyleHint(QFont.Monospace)
+    font.setStyleHint(QFont.StyleHint.Monospace)
     font.setFixedPitch(True)
     return font
 
@@ -65,14 +65,14 @@ class TerminalView(QPlainTextEdit):
         # Do NOT use setReadOnly(True) -- it causes Qt to swallow
         # Enter, Tab, Backspace before keyPressEvent fires.
         # Instead we prevent editing by never calling super().keyPressEvent().
-        self.setLineWrapMode(QPlainTextEdit.NoWrap)
+        self.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
         self.setUndoRedoEnabled(False)
 
         # Prevent Tab from changing focus to another widget
         self.setTabChangesFocus(False)
 
         # Accept focus so we receive key events
-        self.setFocusPolicy(Qt.StrongFocus)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         # Batch rendering with a short timer to avoid re-rendering
         # on every single byte of output
@@ -91,8 +91,8 @@ class TerminalView(QPlainTextEdit):
         self.setFont(font)
 
         palette = self.palette()
-        palette.setColor(QPalette.Base, QColor(DEFAULT_BG))
-        palette.setColor(QPalette.Text, QColor(DEFAULT_FG))
+        palette.setColor(QPalette.ColorRole.Base, QColor(DEFAULT_BG))
+        palette.setColor(QPalette.ColorRole.Text, QColor(DEFAULT_FG))
         self.setPalette(palette)
 
         self.setStyleSheet(
@@ -116,16 +116,18 @@ class TerminalView(QPlainTextEdit):
         text = event.text()
 
         # Ctrl+Shift combinations
-        if modifiers == (Qt.ControlModifier | Qt.ShiftModifier):
-            if key == Qt.Key_C:
+        if modifiers == (
+            Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier
+        ):
+            if key == Qt.Key.Key_C:
                 self.copy()
                 return
-            if key == Qt.Key_V:
+            if key == Qt.Key.Key_V:
                 self._paste_from_clipboard()
                 return
 
         # Ctrl+C: copy if selection, otherwise send SIGINT
-        if key == Qt.Key_C and modifiers == Qt.ControlModifier:
+        if key == Qt.Key.Key_C and modifiers == Qt.KeyboardModifier.ControlModifier:
             if self.textCursor().hasSelection():
                 self.copy()
             else:
@@ -133,27 +135,27 @@ class TerminalView(QPlainTextEdit):
             return
 
         # Ctrl+V: paste
-        if key == Qt.Key_V and modifiers == Qt.ControlModifier:
+        if key == Qt.Key.Key_V and modifiers == Qt.KeyboardModifier.ControlModifier:
             self._paste_from_clipboard()
             return
 
         # Ctrl+A: select all
-        if key == Qt.Key_A and modifiers == Qt.ControlModifier:
+        if key == Qt.Key.Key_A and modifiers == Qt.KeyboardModifier.ControlModifier:
             self.selectAll()
             return
 
         # Ctrl+L: clear screen
-        if key == Qt.Key_L and modifiers == Qt.ControlModifier:
+        if key == Qt.Key.Key_L and modifiers == Qt.KeyboardModifier.ControlModifier:
             self.input_ready.emit(b"\x0c")
             return
 
         # Ctrl+D: EOF
-        if key == Qt.Key_D and modifiers == Qt.ControlModifier:
+        if key == Qt.Key.Key_D and modifiers == Qt.KeyboardModifier.ControlModifier:
             self.input_ready.emit(b"\x04")
             return
 
         # Ctrl+Z: suspend (Unix only)
-        if key == Qt.Key_Z and modifiers == Qt.ControlModifier:
+        if key == Qt.Key.Key_Z and modifiers == Qt.KeyboardModifier.ControlModifier:
             if sys.platform != "win32":
                 self.input_ready.emit(b"\x1a")
             return
@@ -162,55 +164,55 @@ class TerminalView(QPlainTextEdit):
         # Real terminals always send CR for Enter. In canonical mode the
         # pty driver converts CR->NL (ICRNL), but interactive programs
         # using raw mode expect CR directly.
-        if key in (Qt.Key_Return, Qt.Key_Enter):
+        if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self.input_ready.emit(b"\r")
             return
 
         # Backspace
-        if key == Qt.Key_Backspace:
+        if key == Qt.Key.Key_Backspace:
             self.input_ready.emit(b"\x7f")
             return
 
         # Tab
-        if key == Qt.Key_Tab:
+        if key == Qt.Key.Key_Tab:
             self.input_ready.emit(b"\t")
             return
 
         # Arrow keys
-        if key == Qt.Key_Up:
+        if key == Qt.Key.Key_Up:
             self.input_ready.emit(b"\x1b[A")
             return
-        if key == Qt.Key_Down:
+        if key == Qt.Key.Key_Down:
             self.input_ready.emit(b"\x1b[B")
             return
-        if key == Qt.Key_Right:
+        if key == Qt.Key.Key_Right:
             self.input_ready.emit(b"\x1b[C")
             return
-        if key == Qt.Key_Left:
+        if key == Qt.Key.Key_Left:
             self.input_ready.emit(b"\x1b[D")
             return
 
         # Home/End
-        if key == Qt.Key_Home:
+        if key == Qt.Key.Key_Home:
             self.input_ready.emit(b"\x1b[H")
             return
-        if key == Qt.Key_End:
+        if key == Qt.Key.Key_End:
             self.input_ready.emit(b"\x1b[F")
             return
 
         # Delete
-        if key == Qt.Key_Delete:
+        if key == Qt.Key.Key_Delete:
             self.input_ready.emit(b"\x1b[3~")
             return
 
         # Page Up/Down: scroll the view
-        if key == Qt.Key_PageUp:
+        if key == Qt.Key.Key_PageUp:
             sb = self.verticalScrollBar()
             sb.setValue(
                 sb.value() - self.viewport().height() // self.fontMetrics().height()
             )
             return
-        if key == Qt.Key_PageDown:
+        if key == Qt.Key.Key_PageDown:
             sb = self.verticalScrollBar()
             sb.setValue(
                 sb.value() + self.viewport().height() // self.fontMetrics().height()
@@ -218,12 +220,12 @@ class TerminalView(QPlainTextEdit):
             return
 
         # Escape
-        if key == Qt.Key_Escape:
+        if key == Qt.Key.Key_Escape:
             self.input_ready.emit(b"\x1b")
             return
 
         # Regular text input
-        if text and not modifiers & Qt.ControlModifier:
+        if text and not modifiers & Qt.KeyboardModifier.ControlModifier:
             self.input_ready.emit(text.encode("utf-8"))
             return
 
@@ -276,10 +278,10 @@ class TerminalView(QPlainTextEdit):
         # Build the full document
         self.setUpdatesEnabled(False)
         cursor = QTextCursor(self.document())
-        cursor.select(QTextCursor.Document)
+        cursor.select(QTextCursor.SelectionType.Document)
         cursor.removeSelectedText()
 
-        cursor.movePosition(QTextCursor.Start)
+        cursor.movePosition(QTextCursor.MoveOperation.Start)
 
         all_lines = scrollback + screen
         for line_idx, runs in enumerate(all_lines):
@@ -338,13 +340,13 @@ class TerminalView(QPlainTextEdit):
         menu = QMenu(self)
 
         copy_action = QAction("Copy", self)
-        copy_action.setShortcut(QKeySequence.Copy)
+        copy_action.setShortcut(QKeySequence.StandardKey.Copy)
         copy_action.setEnabled(self.textCursor().hasSelection())
         copy_action.triggered.connect(self.copy)
         menu.addAction(copy_action)
 
         paste_action = QAction("Paste", self)
-        paste_action.setShortcut(QKeySequence.Paste)
+        paste_action.setShortcut(QKeySequence.StandardKey.Paste)
         paste_action.triggered.connect(self._paste_from_clipboard)
         menu.addAction(paste_action)
 
@@ -355,11 +357,11 @@ class TerminalView(QPlainTextEdit):
         menu.addAction(clear_action)
 
         select_all_action = QAction("Select All", self)
-        select_all_action.setShortcut(QKeySequence.SelectAll)
+        select_all_action.setShortcut(QKeySequence.StandardKey.SelectAll)
         select_all_action.triggered.connect(self.selectAll)
         menu.addAction(select_all_action)
 
-        menu.exec_(event.globalPos())
+        menu.exec(event.globalPos())
 
     def _paste_from_clipboard(self):
         """Paste clipboard contents to the shell."""

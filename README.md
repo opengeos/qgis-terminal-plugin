@@ -48,7 +48,7 @@ qgis-terminal-plugin/
 
 ## Requirements
 
-- QGIS 3.28 or later
+- QGIS 3.28 or later (compatible with both QGIS 3.x on Qt5 and QGIS 4.0 on Qt6)
 - Python 3.10+
 
 ## Installation
@@ -133,7 +133,7 @@ The terminal is built from four main components:
 
 - **pty-based terminal** (not QProcess): Provides true terminal emulation where shell history, tab completion, and interactive programs work natively
 - **Read-only QPlainTextEdit + key forwarding**: The pty handles echo and line editing; no complex input buffer tracking needed
-- **No external dependencies**: Uses only Python stdlib and PyQt5 from QGIS
+- **No external dependencies**: Uses only Python stdlib and the `qgis.PyQt` abstraction (works on both Qt5 and Qt6)
 - **QPlainTextEdit over QTextEdit**: Better performance for large output, supports scrollback limiting
 
 ## Packaging

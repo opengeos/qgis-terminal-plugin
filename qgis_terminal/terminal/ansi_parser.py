@@ -111,7 +111,7 @@ class AnsiParser:
         fmt.setForeground(fg)
         fmt.setBackground(bg)
         if self._bold:
-            fmt.setFontWeight(QFont.Bold)
+            fmt.setFontWeight(QFont.Weight.Bold)
         if self._italic:
             fmt.setFontItalic(True)
         if self._underline:

@@ -178,7 +178,10 @@ class UnixShellProcess(ShellProcess):
                 os.close(slave_fd)
 
             os.chdir(cwd)
-            os.execvpe(shell_path, [shell_path], env)
+            # Replace the forked child with the user's shell. shell_path is
+            # resolved from settings or the platform default, never from
+            # terminal keystrokes; running a shell is the plugin's feature.
+            os.execvpe(shell_path, [shell_path], env)  # nosec B606
         else:
             # Parent process
             os.close(slave_fd)
@@ -192,7 +195,7 @@ class UnixShellProcess(ShellProcess):
             # Use QSocketNotifier for efficient I/O
             from qgis.PyQt.QtCore import QSocketNotifier
 
-            self._notifier = QSocketNotifier(master_fd, QSocketNotifier.Read, self)
+            self._notifier = QSocketNotifier(master_fd, QSocketNotifier.Type.Read, self)
             self._notifier.activated.connect(self._on_data_ready)
 
     def _on_data_ready(self):
@@ -317,12 +320,19 @@ class WindowsShellProcess(ShellProcess):
     def start(self, shell_path, cwd=None, env=None):
         """Start the shell using subprocess.
 
+        Running an interactive shell is the entire purpose of this plugin.
+        ``shell_path`` comes from the user's shell setting or the platform
+        default, never from terminal keystrokes; ``shell=False`` is implied
+        by the list-form invocation; stdin/stdout/stderr are pipes wired
+        to the terminal widget. Bandit's B404/B603/B606 findings on this
+        path are accepted as the feature itself.
+
         Args:
             shell_path: Path to the shell executable.
             cwd: Working directory.
             env: Environment variables.
         """
-        import subprocess
+        import subprocess  # nosec B404
 
         if env is None:
             env = os.environ.copy()
@@ -335,7 +345,7 @@ class WindowsShellProcess(ShellProcess):
         if hasattr(subprocess, "CREATE_NEW_PROCESS_GROUP"):
             creation_flags = subprocess.CREATE_NEW_PROCESS_GROUP
 
-        self._process = subprocess.Popen(
+        self._process = subprocess.Popen(  # nosec B603
             [shell_path],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,

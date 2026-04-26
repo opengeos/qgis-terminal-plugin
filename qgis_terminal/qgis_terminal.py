@@ -190,7 +190,9 @@ class QgisTerminal:
                 self._terminal_dock.visibilityChanged.connect(
                     self._on_terminal_visibility_changed
                 )
-                self.iface.addDockWidget(Qt.BottomDockWidgetArea, self._terminal_dock)
+                self.iface.addDockWidget(
+                    Qt.DockWidgetArea.BottomDockWidgetArea, self._terminal_dock
+                )
                 self._terminal_dock.show()
                 self._terminal_dock.raise_()
                 return
@@ -228,7 +230,9 @@ class QgisTerminal:
                 self._settings_dock.visibilityChanged.connect(
                     self._on_settings_visibility_changed
                 )
-                self.iface.addDockWidget(Qt.RightDockWidgetArea, self._settings_dock)
+                self.iface.addDockWidget(
+                    Qt.DockWidgetArea.RightDockWidgetArea, self._settings_dock
+                )
                 self._settings_dock.show()
                 self._settings_dock.raise_()
                 return
@@ -314,7 +318,7 @@ class QgisTerminal:
 
         try:
             dialog = UpdateCheckerDialog(self.plugin_dir, self.iface.mainWindow())
-            dialog.exec_()
+            dialog.exec()
         except Exception as e:
             QMessageBox.critical(
                 self.iface.mainWindow(),

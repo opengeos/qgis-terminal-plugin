@@ -12,7 +12,11 @@ import importlib
 import os
 import platform
 import shutil
-import subprocess
+
+# subprocess is used only with hard-coded argv lists (uv/pip/python -m venv)
+# from this module; never with shell=True, and the only variable-length input
+# is the REQUIRED_PACKAGES constant below (currently empty).
+import subprocess  # nosec B404
 import sys
 import time
 from typing import Callable, Dict, List, Optional, Tuple
@@ -343,8 +347,9 @@ def _verify_pip_and_return(python_path: str) -> str:
     env = _get_clean_env()
     kwargs = _get_subprocess_kwargs()
 
-    # Try ensurepip (may already be present from EnvBuilder)
-    subprocess.run(
+    # python_path is the venv interpreter created by this plugin; argv is
+    # static and shell=False (list-form invocation).
+    subprocess.run(  # nosec B603
         [python_path, "-m", "ensurepip", "--upgrade"],
         capture_output=True,
         text=True,
@@ -353,8 +358,8 @@ def _verify_pip_and_return(python_path: str) -> str:
         **kwargs,
     )
 
-    # Verify pip works
-    result = subprocess.run(
+    # Same trust assumptions as above; verify the venv's pip is callable.
+    result = subprocess.run(  # nosec B603
         [python_path, "-m", "pip", "--version"],
         capture_output=True,
         text=True,
@@ -412,7 +417,9 @@ def create_venv(venv_dir: str) -> str:
         uv_path = get_uv_path()
         python_exe = _find_python_executable()
         cmd = [uv_path, "venv", "--python", python_exe, venv_dir]
-        result = subprocess.run(
+        # uv_path/python_exe are absolute paths discovered by this plugin;
+        # argv is static, shell=False.
+        result = subprocess.run(  # nosec B603
             cmd,
             capture_output=True,
             text=True,
@@ -430,7 +437,9 @@ def create_venv(venv_dir: str) -> str:
     subprocess_error = ""
 
     cmd = [python_exe, "-m", "venv", venv_dir]
-    result = subprocess.run(
+    # python_exe is the absolute path to the interpreter discovered above;
+    # argv is static, shell=False.
+    result = subprocess.run(  # nosec B603
         cmd,
         capture_output=True,
         text=True,
@@ -456,7 +465,8 @@ def create_venv(venv_dir: str) -> str:
 
     # Strategy 3: Create venv without pip, then copy Python executable if needed
     try:
-        result2 = subprocess.run(
+        # Same trust assumptions as Strategy 1; argv is static, shell=False.
+        result2 = subprocess.run(  # nosec B603
             [python_exe, "-m", "venv", "--without-pip", venv_dir],
             capture_output=True,
             text=True,
@@ -469,8 +479,20 @@ def create_venv(venv_dir: str) -> str:
                 _try_copy_python_executable(venv_dir)
             if os.path.isfile(python_path):
                 return _verify_pip_and_return(python_path)
-    except Exception:
-        pass
+    except Exception as exc:
+        # Strategy 3 is the last resort; log via QGIS if available, then
+        # fall through to the error report below. contextlib.suppress keeps
+        # the import safe when QGIS is not on sys.path (e.g. unit tests).
+        import contextlib
+
+        with contextlib.suppress(Exception):
+            from qgis.core import Qgis, QgsMessageLog
+
+            QgsMessageLog.logMessage(
+                f"venv strategy 3 failed: {exc}",
+                "QGIS Terminal",
+                level=Qgis.MessageLevel.Warning,
+            )
 
     # All strategies failed
     details = [
@@ -543,7 +565,9 @@ def install_packages(
         installer = "uv" if use_uv else "pip"
         progress_callback(20, f"Installing ({installer}): {', '.join(packages)}...")
 
-    result = subprocess.run(
+    # cmd is a static list built above from REQUIRED_PACKAGES and the venv's
+    # interpreter / uv binary; no shell, no user-controlled arguments.
+    result = subprocess.run(  # nosec B603
         cmd,
         capture_output=True,
         text=True,
@@ -609,7 +633,9 @@ class DepsInstallWorker(QThread):
                 env = _get_clean_env()
                 kwargs = _get_subprocess_kwargs()
 
-                result = subprocess.run(
+                # python_path is the venv interpreter created above; argv
+                # is static, shell=False.
+                result = subprocess.run(  # nosec B603
                     [python_path, "-m", "pip", "--version"],
                     capture_output=True,
                     text=True,
