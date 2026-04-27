@@ -28,7 +28,7 @@ tags=terminal, console, shell, command line, dockable
 
 homepage=https://github.com/opengeos/qgis-terminal-plugin
 category=Plugins
-icon=icons/terminal.svg
+icon=icons/icon.svg
 
 experimental=False
 deprecated=False

@@ -1,18 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#4CAF50;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#2E7D32;stop-opacity:1" />
+    <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9CCC65"/>
+      <stop offset="100%" stop-color="#33691E"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2b303b"/>
+      <stop offset="100%" stop-color="#181b22"/>
+    </linearGradient>
+    <linearGradient id="titlebar" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4a515f"/>
+      <stop offset="100%" stop-color="#363b46"/>
+    </linearGradient>
+    <linearGradient id="prompt" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#b6e26b"/>
+      <stop offset="100%" stop-color="#5e9b25"/>
     </linearGradient>
   </defs>
-  <!-- Background circle -->
-  <circle cx="32" cy="32" r="30" fill="url(#grad1)" stroke="#1B5E20" stroke-width="2"/>
-  <!-- Plugin icon - stylized P -->
-  <text x="32" y="44" font-family="Arial, sans-serif" font-size="36" font-weight="bold"
-        fill="white" text-anchor="middle">P</text>
-  <!-- Small gear icon -->
-  <circle cx="48" cy="48" r="10" fill="#FFC107" stroke="#FF9800" stroke-width="1"/>
-  <circle cx="48" cy="48" r="4" fill="white"/>
-</svg>
 
+  <!-- Outer QGIS-green frame -->
+  <rect x="1" y="1" width="62" height="62" rx="12" ry="12" fill="url(#ring)"/>
+
+  <!-- Terminal window body -->
+  <rect x="3" y="3" width="58" height="58" rx="10" ry="10" fill="url(#body)"/>
+
+  <!-- Title bar -->
+  <path d="M 3 15 L 3 13 L 3 9 A 6 6 0 0 1 9 3 L 55 3 A 6 6 0 0 1 61 9 L 61 15 Z" fill="url(#titlebar)"/>
+
+  <!-- macOS traffic lights -->
+  <circle cx="10" cy="9" r="2.2" fill="#FF5F56"/>
+  <circle cx="17" cy="9" r="2.2" fill="#FFBD2E"/>
+  <circle cx="24" cy="9" r="2.2" fill="#27C93F"/>
+
+  <!-- Subtle title bar separator -->
+  <line x1="3" y1="15" x2="61" y2="15" stroke="#000" stroke-opacity="0.4" stroke-width="0.6"/>
+  <line x1="3" y1="15.6" x2="61" y2="15.6" stroke="#fff" stroke-opacity="0.06" stroke-width="0.5"/>
+
+  <!-- Prompt chevron > -->
+  <path d="M 14 28 L 25 38 L 14 48"
+        stroke="url(#prompt)" stroke-width="4.5"
+        fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Cursor underscore -->
+  <rect x="30" y="44" width="20" height="4" rx="1.5" fill="url(#prompt)"/>
+</svg>
