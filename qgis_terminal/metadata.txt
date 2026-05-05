@@ -3,7 +3,7 @@ name=QGIS Terminal
 qgisMinimumVersion=3.28
 qgisMaximumVersion=4.99
 description=An integrated terminal for QGIS, similar to VS Code's integrated terminal.
-version=0.2.0
+version=0.2.1
 author=Qiusheng Wu
 email=giswqs@gmail.com
 
@@ -34,6 +34,8 @@ experimental=False
 deprecated=False
 
 changelog=
+    0.2.1 - Dependency installer fix
+        - Fixed Python detection for macOS QGIS app bundles
     0.2.0 - QGIS 4.0 / Qt6 compatibility
         - Compatible with QGIS 4.0 (Qt6) and QGIS 3.28+ (Qt5) from a single codebase
         - Fully qualified Qt and Qgis enum references for Qt6
