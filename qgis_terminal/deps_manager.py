@@ -196,8 +196,15 @@ def _is_python_executable_name(path: str) -> bool:
     name = os.path.basename(path).lower()
     if name.endswith(".exe"):
         name = name[:-4]
-    return name in ("python", "python3") or (
-        name.startswith("python") and name[6:7].isdigit()
+    if name in ("python", "python3"):
+        return True
+    if not name.startswith("python"):
+        return False
+    suffix = name[6:]
+    if "-" in suffix:
+        return False
+    return suffix.isdigit() or (
+        suffix.count(".") == 1 and all(part.isdigit() for part in suffix.split("."))
     )
 
 
@@ -317,11 +324,6 @@ def _candidate_python_paths() -> List[str]:
             ]
         )
 
-    for name in ("python3", "python"):
-        which_python = shutil.which(name)
-        if which_python:
-            candidates.append(which_python)
-
     unique = []
     seen = set()
     for candidate in candidates:
@@ -333,17 +335,18 @@ def _candidate_python_paths() -> List[str]:
 
 def _find_python_executable() -> str:
     """Find a real Python executable for subprocess calls."""
-    for candidate in _candidate_python_paths():
+    candidates = _candidate_python_paths()
+    for candidate in candidates:
         if _python_candidate_matches_runtime(candidate):
             return candidate
 
-    candidates = "\n".join(f"  - {path}" for path in _candidate_python_paths())
+    candidates_text = "\n".join(f"  - {path}" for path in candidates)
     raise RuntimeError(
         "Could not find a Python executable matching the QGIS Python runtime.\n"
         f"QGIS sys.executable: {sys.executable}\n"
         f"Python version: {sys.version_info.major}.{sys.version_info.minor}\n"
         "Checked candidates:\n"
-        f"{candidates or '  - none'}"
+        f"{candidates_text or '  - none'}"
     )
 
 
