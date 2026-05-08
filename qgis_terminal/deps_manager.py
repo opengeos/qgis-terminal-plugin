@@ -191,8 +191,25 @@ def _get_subprocess_kwargs() -> dict:
     return {}
 
 
+def _is_python_executable_name(path: str) -> bool:
+    """Return True when a path name looks like a Python interpreter."""
+    name = os.path.basename(path).lower()
+    if name.endswith(".exe"):
+        name = name[:-4]
+    if name in ("python", "python3"):
+        return True
+    if not name.startswith("python"):
+        return False
+    suffix = name[6:]
+    if "-" in suffix:
+        return False
+    return suffix.isdigit() or (
+        suffix.count(".") == 1 and all(part.isdigit() for part in suffix.split("."))
+    )
+
+
 def _is_macos_qgis_app_bundle_python(path: str) -> bool:
-    """Return True for Python binaries inside a QGIS macOS .app bundle."""
+    """Return True for unsafe Python launchers in QGIS.app/Contents/MacOS."""
     if not (platform.system() == "Darwin" or sys.platform == "darwin"):
         return False
     parts = os.path.abspath(path).split(os.sep)
@@ -200,7 +217,12 @@ def _is_macos_qgis_app_bundle_python(path: str) -> bool:
         lower = part.lower()
         if not (lower.startswith("qgis") and lower.endswith(".app")):
             continue
-        return idx + 1 < len(parts) and parts[idx + 1] == "Contents"
+        if idx + 2 >= len(parts):
+            return False
+        if parts[idx + 1].lower() != "contents" or parts[idx + 2].lower() != "macos":
+            return False
+        name = os.path.basename(path).lower()
+        return name.startswith("qgis") or _is_python_executable_name(path)
     return False
 
 
@@ -221,11 +243,18 @@ def _find_python_executable() -> str:
                 "QGIS app-bundle Python is not safe for creating virtual "
                 "environments; use uv-managed Python instead."
             )
-        return sys.executable
+        if _is_python_executable_name(sys.executable):
+            return sys.executable
+        for name in ("python3", "python"):
+            candidate = shutil.which(name)
+            if candidate and _is_python_executable_name(candidate):
+                return candidate
+        raise RuntimeError(
+            f"sys.executable is not a Python interpreter: {sys.executable}"
+        )
 
     # Strategy 1: Check if sys.executable is already Python
-    exe_name = os.path.basename(sys.executable).lower()
-    if exe_name in ("python.exe", "python3.exe"):
+    if _is_python_executable_name(sys.executable):
         return sys.executable
 
     # Strategy 2: Use sys._base_prefix to find the Python installation.
@@ -271,11 +300,15 @@ def _find_python_executable() -> str:
             return best_candidate
 
     # Strategy 5: Use shutil.which as last resort
-    which_python = shutil.which("python")
-    if which_python:
-        return which_python
+    for name in ("python3", "python"):
+        which_python = shutil.which(name)
+        if which_python and _is_python_executable_name(which_python):
+            return which_python
 
-    return sys.executable
+    raise RuntimeError(
+        f"Could not find a Python interpreter for venv creation; "
+        f"sys.executable is {sys.executable}"
+    )
 
 
 def _create_venv_with_env_builder(venv_dir: str) -> bool:
@@ -296,8 +329,7 @@ def _create_venv_with_env_builder(venv_dir: str) -> bool:
         True if the venv was created and the Python executable exists.
     """
     # Guard: only safe when sys.executable is actually Python.
-    exe_name = os.path.basename(sys.executable).lower()
-    if exe_name not in ("python.exe", "python3.exe", "python", "python3"):
+    if not _is_python_executable_name(sys.executable):
         return False
 
     try:
@@ -440,6 +472,7 @@ def create_venv(venv_dir: str) -> str:
     # Strategy 0: Use uv venv when available (fastest, no pip needed). On
     # official macOS QGIS app bundles, require uv-managed Python instead of
     # reusing QGIS's app-bundle Python wrapper for venv creation.
+    uv_error = ""
     if uv_exists():
         uv_path = get_uv_path()
         uv_python = python_exe or f"{sys.version_info.major}.{sys.version_info.minor}"
@@ -459,13 +492,17 @@ def create_venv(venv_dir: str) -> str:
         )
         if result.returncode == 0 and os.path.isfile(python_path):
             return python_path
+        uv_error = result.stderr or result.stdout or f"exit code {result.returncode}"
         # uv venv failed — clean up and fall through to pip strategies
         _cleanup_partial_venv(venv_dir)
 
     # Strategy 1: Subprocess with the real Python executable
     subprocess_error = ""
     if python_exe is None:
-        raise RuntimeError(python_lookup_error)
+        message = python_lookup_error or "No usable Python executable was found."
+        if uv_error:
+            message += f"\nuv venv failed: {uv_error}"
+        raise RuntimeError(message)
 
     cmd = [python_exe, "-m", "venv", venv_dir]
     # python_exe is the absolute path to the interpreter discovered above;
