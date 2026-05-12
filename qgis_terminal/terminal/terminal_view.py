@@ -298,7 +298,26 @@ class TerminalView(QPlainTextEdit):
             sb = self.verticalScrollBar()
             sb.setValue(sb.maximum())
 
+        self._sync_text_cursor_to_screen_cursor(len(scrollback))
         self._screen.changed = False
+
+    def _sync_text_cursor_to_screen_cursor(self, scrollback_rows):
+        """Move Qt's visible caret to the terminal cursor position.
+
+        Args:
+            scrollback_rows: Number of scrollback rows rendered before the
+                active screen buffer.
+        """
+        row = scrollback_rows + self._screen.cursor_row
+        block = self.document().findBlockByNumber(row)
+        if not block.isValid():
+            return
+
+        max_column = max(block.length() - 1, 0)
+        column = min(self._screen.cursor_col, max_column)
+        cursor = QTextCursor(block)
+        cursor.setPosition(block.position() + column)
+        self.setTextCursor(cursor)
 
     def _on_scroll(self, value):
         """Track whether the user has scrolled away from the bottom.
