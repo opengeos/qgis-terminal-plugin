@@ -183,6 +183,10 @@ class TerminalWidget(QWidget):
         self._terminal_view.reset()
         self._start_shell()
 
+    def focus_terminal(self):
+        """Move keyboard focus to the terminal view."""
+        self._terminal_view.setFocus()
+
     def shutdown(self):
         """Shut down the shell process cleanly."""
         if self._shell_process:
