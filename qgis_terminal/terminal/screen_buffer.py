@@ -120,16 +120,19 @@ class Cell:
 
 
 # Regex patterns
-# CSI parameters can include digits, semicolons, and modifier prefixes
-# like ? (DEC private), > (extended), < (kitty), = (alternate).
-_CSI_RE = re.compile(r"\x1b\[([0-9;?<>=]*)([A-Za-z@`])")
+# CSI uses parameter bytes, optional intermediate bytes, then a final byte.
+# The intermediate byte is important for sequences such as ESC[0 q, which
+# sets the cursor style and is emitted by tools like OpenAI Codex.
+_CSI_RE = re.compile(r"\x1b\[([0-?]*)([ -/]*)([@-~])")
 _OSC_RE = re.compile(r"\x1b\].*?(?:\x07|\x1b\\)")
 _ANY_ESC_RE = re.compile(
     r"\x1b(?:"
-    r"\[([0-9;?<>=]*)([A-Za-z@`])"  # CSI (with >, <, = modifiers)
+    r"\[([0-?]*)([ -/]*)([@-~])"  # CSI
     r"|\].*?(?:\x07|\x1b\\)"  # OSC
+    r"|[PX^_].*?\x1b\\"  # DCS, SOS, PM, APC
     r"|[()][0-9A-Za-z]"  # Character set
-    r"|[=>MNOP78#]"  # Simple escapes
+    r"|[#%][0-9A-Za-z]"  # Other two-byte selector escapes
+    r"|[=>MNOP78]"  # Simple escapes
     r")"
 )
 
@@ -177,6 +180,57 @@ class ScreenBuffer:
 
         # Track if content changed
         self.changed = True
+        self._pending_escape = ""
+
+    def _is_incomplete_escape(self, data, pos):
+        """Return whether data ends in an unfinished escape sequence.
+
+        Args:
+            data: Full data chunk being parsed.
+            pos: Index of an ESC character in data.
+
+        Returns:
+            True when the remainder should be held for the next feed call.
+        """
+        fragment = data[pos:]
+        if fragment == "\x1b":
+            return True
+
+        introducer = fragment[1]
+        if introducer == "[":
+            return self._is_incomplete_csi(fragment)
+        if introducer in "PX^_]":
+            return not (fragment.endswith("\x07") or fragment.endswith("\x1b\\"))
+        if introducer in "(#%":
+            return len(fragment) == 2
+
+        return False
+
+    def _is_incomplete_csi(self, fragment):
+        """Return whether a CSI fragment is missing its final byte.
+
+        Args:
+            fragment: Escape sequence fragment starting with ESC[.
+
+        Returns:
+            True if all available bytes are valid CSI prefix bytes but no final
+            byte has arrived yet.
+        """
+        if len(fragment) == 2:
+            return True
+
+        in_intermediates = False
+        for ch in fragment[2:]:
+            code = ord(ch)
+            if 0x40 <= code <= 0x7E:
+                return False
+            if 0x30 <= code <= 0x3F and not in_intermediates:
+                continue
+            if 0x20 <= code <= 0x2F:
+                in_intermediates = True
+                continue
+            return False
+        return True
 
     def _empty_line(self):
         """Create an empty line of cells.
@@ -228,6 +282,10 @@ class ScreenBuffer:
         Args:
             data: String of terminal output to process.
         """
+        if self._pending_escape:
+            data = self._pending_escape + data
+            self._pending_escape = ""
+
         pos = 0
         length = len(data)
 
@@ -237,11 +295,14 @@ class ScreenBuffer:
             if ch == "\x1b":
                 m = _ANY_ESC_RE.match(data, pos)
                 if m:
-                    if m.group(1) is not None or m.group(2) is not None:
+                    if m.group(3) is not None:
                         # CSI sequence
-                        self._handle_csi(m.group(1) or "", m.group(2) or "")
+                        self._handle_csi(m.group(1) or "", m.group(3) or "")
                     # OSC and other sequences silently consumed
                     pos = m.end()
+                elif self._is_incomplete_escape(data, pos):
+                    self._pending_escape = data[pos:]
+                    break
                 else:
                     # Incomplete or unknown escape -- skip ESC
                     pos += 1
@@ -738,5 +799,6 @@ class ScreenBuffer:
         self._using_alt = False
         self._alt_grid = None
         self._alt_cursor = None
+        self._pending_escape = ""
         self._dirty_lines = set(range(self.rows))
         self.changed = True
