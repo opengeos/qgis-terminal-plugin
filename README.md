@@ -60,10 +60,9 @@ qgis-terminal-plugin/
 
 1. Open QGIS
 2. Go to **Plugins** -> **Manage and Install Plugins...**
-3. Go to the **Settings** tab
-4. Go to the **All** tab
-5. Search for "QGIS Terminal"
-6. Select the plugin and click **Install Plugin**
+3. Go to the **All** tab
+4. Search for "QGIS Terminal"
+5. Select the plugin and click **Install Plugin**
 
 ### Option B: Install Script
 
