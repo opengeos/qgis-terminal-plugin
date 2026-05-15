@@ -1,5 +1,8 @@
 # QGIS Terminal
 
+[![QGIS Plugin](https://img.shields.io/badge/QGIS-Plugin-green.svg)](https://plugins.qgis.org/plugins/qgis_terminal)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 An integrated terminal plugin for QGIS, similar to VS Code's integrated terminal. Provides a dockable terminal panel with full shell access, ANSI color support, and cross-platform compatibility.
 
 ## Features
@@ -58,13 +61,9 @@ qgis-terminal-plugin/
 1. Open QGIS
 2. Go to **Plugins** -> **Manage and Install Plugins...**
 3. Go to the **Settings** tab
-4. Click **Add...** under "Plugin Repositories"
-5. Give a name for the repository, e.g., "OpenGeos"
-6. Enter the URL of the repository: https://qgis.gishub.org/plugins.xml
-7. Click **OK**
-8. Go to the **All** tab
-9. Search for "QGIS Terminal"
-10. Select the plugin and click **Install Plugin**
+4. Go to the **All** tab
+5. Search for "QGIS Terminal"
+6. Select the plugin and click **Install Plugin**
 
 ### Option B: Install Script
 
@@ -96,16 +95,16 @@ Copy the `qgis_terminal` folder to your QGIS plugins directory:
 
 ### Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+C` | Copy (if text selected) or send interrupt signal |
-| `Ctrl+V` | Paste from clipboard |
-| `Ctrl+L` | Clear screen |
-| `Ctrl+D` | Send EOF |
-| `Ctrl+A` | Select all |
-| `Up/Down` | Navigate command history |
-| `Tab` | Shell tab completion |
-| `Page Up/Down` | Scroll terminal output |
+| Shortcut       | Action                                           |
+| -------------- | ------------------------------------------------ |
+| `Ctrl+C`       | Copy (if text selected) or send interrupt signal |
+| `Ctrl+V`       | Paste from clipboard                             |
+| `Ctrl+L`       | Clear screen                                     |
+| `Ctrl+D`       | Send EOF                                         |
+| `Ctrl+A`       | Select all                                       |
+| `Up/Down`      | Navigate command history                         |
+| `Tab`          | Shell tab completion                             |
+| `Page Up/Down` | Scroll terminal output                           |
 
 ### Toolbar Actions
 
