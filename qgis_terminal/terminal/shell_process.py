@@ -400,10 +400,15 @@ class WindowsShellProcess(ShellProcess):
         """Write data to the shell's stdin.
 
         Args:
-            data: Bytes to send to the shell.
+            data: Bytes (or str) to send to the shell.
         """
         if not self._proc or not self._proc.isalive():
             return
+        if isinstance(data, bytes):
+            # pywinpty's PtyProcess opens in text mode by default and rejects
+            # bytes; the rest of the plugin produces utf-8 bytes (terminal_view
+            # encodes keystrokes that way), so decode at the boundary.
+            data = data.decode("utf-8", errors="replace")
         try:
             self._proc.write(data)
         except (OSError, EOFError):
