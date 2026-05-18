@@ -15,7 +15,7 @@ import shutil
 
 # subprocess is used only with hard-coded argv lists (uv/pip/python -m venv)
 # from this module; never with shell=True, and the only variable-length input
-# is the REQUIRED_PACKAGES constant below (currently empty).
+# is the REQUIRED_PACKAGES constant below.
 import subprocess  # nosec B404
 import sys
 import time
@@ -24,8 +24,8 @@ from typing import Callable, Dict, List, Optional, Tuple
 from qgis.PyQt.QtCore import QThread, pyqtSignal
 
 # Required packages: (import_name, pip_install_name)
-# No external dependencies needed -- the terminal uses only Python stdlib + PyQt5.
-REQUIRED_PACKAGES = []
+# Windows uses pywinpty (ConPTY) for a real PTY; Unix uses the stdlib pty module.
+REQUIRED_PACKAGES = [("winpty", "pywinpty>=2.0.12")] if sys.platform == "win32" else []
 
 CACHE_DIR = os.path.join(os.path.expanduser("~"), ".qgis_terminal")
 PYTHON_VERSION = f"py{sys.version_info.major}.{sys.version_info.minor}"

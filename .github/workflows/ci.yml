@@ -51,3 +51,18 @@ jobs:
                   pip install PyQt6 pytest
             - name: Run import smoke tests
               run: pytest tests -v
+
+    windows-conpty-smoke:
+        name: Windows ConPTY smoke
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v6
+            - uses: actions/setup-python@v6
+              with:
+                  python-version: "3.12"
+            - name: Install PyQt6, pywinpty, and pytest
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install PyQt6 "pywinpty>=2.0.12" pytest
+            - name: Run Windows shell smoke test
+              run: pytest tests/test_windows_shell.py -v

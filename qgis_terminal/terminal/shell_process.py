@@ -3,15 +3,16 @@ Cross-Platform Shell Process Manager
 
 Manages the shell subprocess with platform-specific implementations:
 - Unix (Linux/macOS): Uses pty for true terminal emulation
-- Windows: Uses subprocess with pipe-based I/O
+- Windows: Uses pywinpty (ConPTY) for true terminal emulation
 """
 
 import os
 import sys
 import signal
 import platform
+import threading
 
-from qgis.PyQt.QtCore import QObject, QTimer, pyqtSignal
+from qgis.PyQt.QtCore import Qt, QObject, QTimer, pyqtSignal
 
 
 def get_default_shell():
@@ -305,7 +306,22 @@ class UnixShellProcess(ShellProcess):
 
 
 class WindowsShellProcess(ShellProcess):
-    """Windows shell process using subprocess with pipe-based I/O."""
+    """Windows shell process using pywinpty (ConPTY pseudo-console).
+
+    Wraps the Windows pseudo-console API so PowerShell's PSReadLine,
+    ``cmd.exe`` line editing, and PTY-aware CLIs (``gemini``, ``claude``,
+    ``ipython``, ...) all see a real terminal on stdin. The previous
+    pipe-based backend looked like a non-interactive batch session to those
+    programs, which broke backspace/delete in PowerShell, made ``cmd.exe``
+    swallow keystrokes, and caused ``isatty()`` checks to fail.
+
+    ``pywinpty.PtyProcess.read()`` is blocking and Windows handles can't be
+    watched with ``QSocketNotifier``, so output is drained on a daemon
+    reader thread and forwarded to the GUI thread via queued signals.
+    """
+
+    _data_ready = pyqtSignal(str)
+    _exit_ready = pyqtSignal(int)
 
     def __init__(self, parent=None):
         """Initialize the Windows shell process.
@@ -314,96 +330,71 @@ class WindowsShellProcess(ShellProcess):
             parent: Parent QObject.
         """
         super().__init__(parent)
-        self._process = None
-        self._poll_timer = None
+        self._proc = None
+        self._reader = None
+        self._stop = threading.Event()
+        self._data_ready.connect(self.output_ready, Qt.ConnectionType.QueuedConnection)
+        self._exit_ready.connect(
+            self.process_exited, Qt.ConnectionType.QueuedConnection
+        )
 
     def start(self, shell_path, cwd=None, env=None):
-        """Start the shell using subprocess.
-
-        Running an interactive shell is the entire purpose of this plugin.
-        ``shell_path`` comes from the user's shell setting or the platform
-        default, never from terminal keystrokes; ``shell=False`` is implied
-        by the list-form invocation; stdin/stdout/stderr are pipes wired
-        to the terminal widget. Bandit's B404/B603/B606 findings on this
-        path are accepted as the feature itself.
+        """Start the shell inside a ConPTY pseudo-console.
 
         Args:
             shell_path: Path to the shell executable.
             cwd: Working directory.
             env: Environment variables.
         """
-        import subprocess  # nosec B404
+        import winpty  # pywinpty; import name differs from pip name.
 
         if env is None:
             env = os.environ.copy()
+        env.setdefault("TERM", "xterm-256color")
 
         if cwd is None:
             cwd = os.path.expanduser("~")
 
-        # Use CREATE_NEW_PROCESS_GROUP on Windows for Ctrl+C handling
-        creation_flags = 0
-        if hasattr(subprocess, "CREATE_NEW_PROCESS_GROUP"):
-            creation_flags = subprocess.CREATE_NEW_PROCESS_GROUP
-
-        self._process = subprocess.Popen(  # nosec B603
+        self._stop.clear()
+        self._proc = winpty.PtyProcess.spawn(
             [shell_path],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
             cwd=cwd,
             env=env,
-            creationflags=creation_flags,
-            bufsize=0,
+            dimensions=(24, 80),
         )
+        self._reader = threading.Thread(
+            target=self._reader_loop, name="qgis-terminal-pty-reader", daemon=True
+        )
+        self._reader.start()
 
-        # Poll for output every 50ms
-        self._poll_timer = QTimer(self)
-        self._poll_timer.timeout.connect(self._poll_output)
-        self._poll_timer.start(50)
+    def _reader_loop(self):
+        """Drain pywinpty output on a background thread.
 
-    def _poll_output(self):
-        """Poll stdout and stderr for available data."""
-        if self._process is None:
-            return
-
-        if self._process.poll() is not None:
-            # Process has exited, read remaining output
-            self._read_remaining()
-            self._poll_timer.stop()
-            self.process_exited.emit(self._process.returncode)
-            return
-
-        self._read_available()
-
-    def _read_available(self):
-        """Read available data from stdout/stderr without blocking."""
-        import msvcrt
-        import ctypes
-
-        for pipe in (self._process.stdout, self._process.stderr):
-            if pipe is None:
-                continue
-            handle = msvcrt.get_osfhandle(pipe.fileno())
-            avail = ctypes.c_ulong(0)
-            ctypes.windll.kernel32.PeekNamedPipe(
-                handle, None, 0, None, ctypes.byref(avail), None
-            )
-            if avail.value > 0:
-                data = pipe.read(avail.value)
-                if data:
+        pywinpty's ``read`` blocks until data is available or the child
+        exits. Decode here so the GUI thread only sees text. Use a queued
+        connection on ``_data_ready`` so emission marshals back onto the
+        Qt event loop.
+        """
+        exit_code = 0
+        try:
+            while not self._stop.is_set():
+                try:
+                    data = self._proc.read(4096)
+                except EOFError:
+                    break
+                if not data:
+                    break
+                if isinstance(data, bytes):
                     text = data.decode("utf-8", errors="replace")
-                    self.output_ready.emit(text)
-
-    def _read_remaining(self):
-        """Read any remaining output after process exit."""
-        if self._process is None:
-            return
-        for pipe in (self._process.stdout, self._process.stderr):
-            if pipe:
-                data = pipe.read()
-                if data:
-                    text = data.decode("utf-8", errors="replace")
-                    self.output_ready.emit(text)
+                else:
+                    text = data
+                self._data_ready.emit(text)
+        finally:
+            try:
+                exit_code = int(getattr(self._proc, "exitstatus", 0) or 0)
+            except (TypeError, ValueError):
+                exit_code = 0
+            self._exit_ready.emit(exit_code)
 
     def write(self, data):
         """Write data to the shell's stdin.
@@ -411,25 +402,39 @@ class WindowsShellProcess(ShellProcess):
         Args:
             data: Bytes to send to the shell.
         """
-        if self._process and self._process.stdin:
-            try:
-                self._process.stdin.write(data)
-                self._process.stdin.flush()
-            except (BrokenPipeError, OSError):
-                pass
+        if not self._proc or not self._proc.isalive():
+            return
+        try:
+            self._proc.write(data)
+        except (OSError, EOFError):
+            pass
+
+    def resize(self, rows, cols):
+        """Resize the pseudo-console.
+
+        Args:
+            rows: Number of rows.
+            cols: Number of columns.
+        """
+        if not self._proc or not self._proc.isalive():
+            return
+        try:
+            self._proc.setwinsize(rows, cols)
+        except OSError:
+            pass
 
     def terminate(self):
-        """Terminate the shell process."""
-        if self._poll_timer:
-            self._poll_timer.stop()
-            self._poll_timer = None
-
-        if self._process:
+        """Terminate the shell process and join the reader thread."""
+        self._stop.set()
+        if self._proc is not None:
             try:
-                self._process.terminate()
-            except OSError:
+                self._proc.terminate(force=True)
+            except (OSError, EOFError):
                 pass
-            self._process = None
+        if self._reader is not None:
+            self._reader.join(timeout=1.0)
+        self._proc = None
+        self._reader = None
 
     def is_running(self):
         """Check if the shell process is running.
@@ -437,7 +442,7 @@ class WindowsShellProcess(ShellProcess):
         Returns:
             True if the process is running.
         """
-        return self._process is not None and self._process.poll() is None
+        return self._proc is not None and self._proc.isalive()
 
 
 def create_shell_process(parent=None):
