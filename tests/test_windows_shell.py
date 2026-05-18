@@ -70,9 +70,9 @@ def test_windows_shell_echoes_via_conpty():
 
     try:
         proc.start(os.environ.get("COMSPEC", "cmd.exe"))
-        assert _drain_until(lambda: len(captured) > 0, timeout=10.0), (
-            "no output received from cmd.exe within timeout"
-        )
+        assert _drain_until(
+            lambda: len(captured) > 0, timeout=10.0
+        ), "no output received from cmd.exe within timeout"
         proc.write(b"echo hello\r\n")
         assert _drain_until(
             lambda: "hello" in "".join(captured), timeout=10.0
